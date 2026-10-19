@@ -1,0 +1,105 @@
+services:
+  refbridge_broker:
+    image: eclipse-mosquitto:ilc
+    container_name: refbridge_broker
+    restart: unless-stopped
+    ports:
+      - "1883:1883"  # MQTT Port
+      # - "9001:9001"  # WebSocket Port (optional)
+    volumes:
+      - ./refbridge_broker/mosquitto/config:/mosquitto/config
+      - ./refbridge_broker/mosquitto/data:/mosquitto/data
+      - ./refbridge_broker/mosquitto/log:/mosquitto/log
+    networks:
+      - mqtt_network
+
+  magenta_broker:
+    image: eclipse-mosquitto:ilc
+    container_name: magenta_broker
+    restart: unless-stopped
+    ports:
+      - "11883:1883"  # MQTT Port
+    volumes:
+      - ./magenta/mosquitto/config:/mosquitto/config
+      - ./magenta/mosquitto/data:/mosquitto/data
+      - ./magenta/mosquitto/log:/mosquitto/log
+    networks:
+      - mqtt_network
+
+  cyan_broker:
+    image: eclipse-mosquitto:ilc
+    container_name: cyan_broker
+    restart: unless-stopped
+    ports:
+      - "21883:1883"  # MQTT Port
+    volumes:
+      - ./cyan/mosquitto/config:/mosquitto/config
+      - ./cyan/mosquitto/data:/mosquitto/data
+      - ./cyan/mosquitto/log:/mosquitto/log
+    networks:
+      - mqtt_network
+
+  magenta_bridge:
+    image: "${MQTT_BRIDGE_IMAGE}:${MQTT_BRIDGE_TAG}"
+    ports:
+      - "4500:4444/udp"
+      - "4442:4442/udp"
+      # - "4447:4447/udp"   # single-host: refbox binds 4447 itself; bridge only sends there
+    container_name: magenta_bridge
+    restart: "on-failure"
+    depends_on:
+      - magenta_broker
+    environment:
+      - BROKER=tcp://magenta_broker:1883
+      - REFBOX=${RC_MQTT_REFBOX}
+      - TEAM=TEAM_MAGENTA
+      - KEY=randomkey
+    networks:
+      - mqtt_network
+
+
+  cyan_bridge:
+    image: "${MQTT_BRIDGE_IMAGE}:${MQTT_BRIDGE_TAG}"
+    ports:
+      - "4501:4444/udp"
+      - "4441:4441/udp"
+      # - "4446:4446/udp"   # single-host: refbox binds 4446 itself; bridge only sends there
+    # network_mode: "host"
+    container_name: cyan_bridge
+    restart: "on-failure"
+    depends_on:
+      - cyan_broker
+    environment:
+      - BROKER=tcp://cyan_broker:1883
+      - REFBOX=${RC_MQTT_REFBOX}
+      - TEAM="TEAM_CYAN"
+      - KEY=randomkey
+    networks:
+      - mqtt_network
+
+  refbridge:
+    build: ./refbridge
+    container_name: refbridge
+    restart: unless-stopped
+    depends_on:
+      - refbridge_broker
+    networks:
+      - mqtt_network
+    environment:
+      - REFBRIDGE_BROKER=tcp://refbridge_broker:1883
+      - MAGENTA_BROKER=tcp://magenta_broker:1883
+      - CYAN_BROKER=tcp://cyan_broker:1883
+    volumes:
+      - ./refbridge:/app  # Mount โค้ดทั้งหมด เพื่อให้แก้ `mqtt_forward.py` ได้เลย
+    working_dir: /app
+    command: ["python", "mqtt_forward.py"]
+
+networks:
+  mqtt_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24   # single-host: fixed so RC_MQTT_REFBOX can be the gateway 172.30.0.1
+          gateway: 172.30.0.1
+
+

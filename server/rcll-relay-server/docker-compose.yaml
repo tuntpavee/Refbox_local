@@ -1,0 +1,12 @@
+
+services:
+  udp_forwarder:
+    build: .
+    container_name: udp_forwarder
+    network_mode: "host"  # Allows direct access to host network (required for UDP)
+    restart: always
+    volumes:
+      - ./udp_forwarder.py:/app/udp_forwarder.py  # Mount script as a volume
+
+
+

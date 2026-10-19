@@ -1,0 +1,12 @@
+# runtime data (recreated by ./refbox.sh start)
+server/rcll-get-started/compose_files/data/
+server/rcll-get-started/logs/
+bridge/thopen-refbox-bridge/*/mosquitto/data/*
+!bridge/thopen-refbox-bridge/*/mosquitto/data/.gitignore
+bridge/thopen-refbox-bridge/*/mosquitto/log/
+
+# local clutter
+__pycache__/
+*.pyc
+.DS_Store
+venv/

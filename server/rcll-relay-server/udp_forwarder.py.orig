@@ -1,0 +1,28 @@
+import socket
+
+# RefBox public-peer settings
+LISTEN_IP = "0.0.0.0"   # Listen on all interfaces inside Docker
+LISTEN_PORT = 4444       # Public-peer send-port
+
+# Destination computers
+DESTINATIONS = [
+    ("192.168.68.66", 4500),  # First computer
+    ("192.168.68.66", 4501)   # Second computer
+]
+
+# Create UDP socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((LISTEN_IP, LISTEN_PORT))
+
+print(f"Listening for UDP packets on {LISTEN_IP}:{LISTEN_PORT}")
+
+while True:
+    data, addr = sock.recvfrom(4096)  # Receive data from RefBox
+    print(f"Received from {addr}: {data}")
+
+    # Forward to each destination
+    for dest_ip, dest_port in DESTINATIONS:
+        sock.sendto(data, (dest_ip, dest_port))
+        print(f"Forwarded to {dest_ip}:{dest_port}")
+
+

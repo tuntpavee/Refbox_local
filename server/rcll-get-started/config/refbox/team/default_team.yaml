@@ -1,0 +1,15 @@
+%YAML 1.2
+---
+---
+# Start a fresh game per default.
+
+llsfrb:
+  game:
+    teams: [Carologistics, GRIPS, Solidus, Babytigers-R, TEAM_CYAN, TEAM_MAGENTA]
+    crypto-keys:
+      Carologistics: randomkey
+      GRIPS: randomkey
+      Solidus: randomkey
+      Babytigers-R: randomkey
+      TEAM_CYAN: randomkey
+      TEAM_MAGENTA: randomkey
